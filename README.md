@@ -85,7 +85,85 @@ When a streak threshold is hit, **both streaks are reset to 0** so the next tran
 All performance is tracked per-difficulty level (`diff_scores`) and shown as a breakdown on the Results page.
 
 ---
+# 🧠 AI-Based Adaptive Quiz System
 
+## 📌 Overview
+
+This project implements an adaptive quiz system where question difficulty dynamically changes based on user performance. The system also classifies users into skill levels (Beginner, Intermediate, Expert) based on accuracy.
+
+---
+
+## 🔄 Adaptive Difficulty Logic
+
+The quiz adjusts difficulty using *streak-based adaptation*:
+
+* ✅ 2 consecutive correct answers → Increase difficulty
+* ❌ 2 consecutive wrong answers → Decrease difficulty
+* Otherwise → Maintain current level
+
+### 📊 Example Flow
+
+| Q | Level  | Answer  | Streak | Next Level |
+| - | ------ | ------- | ------ | ---------- |
+| 1 | Medium | Correct | C=1    | Medium     |
+| 2 | Medium | Correct | C=2 🔥 | Hard       |
+| 3 | Hard   | Wrong   | W=1    | Hard       |
+| 4 | Hard   | Wrong   | W=2 🔥 | Medium     |
+| 5 | Medium | Wrong   | W=1    | Medium     |
+| 6 | Medium | Wrong   | W=2 🔥 | Easy       |
+
+---
+
+## ⚙️ Difficulty Transition Rules
+
+* Easy → Medium → Hard (increase)
+* Hard → Medium → Easy (decrease)
+* Difficulty remains within bounds (Easy–Hard)
+
+---
+
+## 🎯 Performance Evaluation
+
+After completing the quiz, user performance is evaluated using accuracy.
+
+### 🧮 Accuracy Calculation
+
+python
+accuracy = int(score / TOTAL * 100)
+
+
+---
+
+## 🏆 Skill Level Classification
+
+Users are categorized into levels based on accuracy:
+
+python
+if accuracy <= 40:
+    level = "Beginner"
+elif accuracy <= 70:
+    level = "Intermediate"
+else:
+    level = "Expert"
+
+
+### 📊 Classification Table
+
+| Accuracy Range | Level        |
+| -------------- | ------------ |
+| 0% – 40%       | Beginner     |
+| 41% – 70%      | Intermediate |
+| 71% – 100%     | Expert       |
+
+---
+
+## 💡 Key Features
+
+* 🔁 Adaptive difficulty based on performance streaks
+* 🧠 AI-generated quiz questions
+* 📊 Real-time performance tracking
+* 🏆 Skill level classification
+* 🎨 Interactive and user-friendly UI
 ## ✨ Features
 
 ### 🧠 Adaptive Quiz Engine
