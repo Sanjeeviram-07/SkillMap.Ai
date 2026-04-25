@@ -354,7 +354,6 @@ Your browser will open automatically at `http://localhost:8501` 🎉
 
 ### 🔐 Login Page
 ![Login Page](images/login.png)
->>>>>>> 34178c2 (Added image folder and updated README file)
 
 ### 🧩 Domain Selection
 ![Domain Selection](images/domain.png)
