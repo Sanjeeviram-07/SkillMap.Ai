@@ -351,7 +351,6 @@ Your browser will open automatically at `http://localhost:8501` 🎉
 
 ## 📸 Screenshots
 
-> *(Add actual screenshots here)*
 
 | Page | Screenshot |
 |---|---|
@@ -422,6 +421,7 @@ skillmap-ai/
 ---
 
 ## 🤝 Contributing
+Authors Sivabalan And SanjeeviRam.
 
 Contributions are welcome and appreciated!
 
