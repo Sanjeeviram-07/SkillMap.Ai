@@ -131,11 +131,6 @@ After completing the quiz, user performance is evaluated using accuracy.
 python
 accuracy = int(score / TOTAL * 100)
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 34178c2 (Added image folder and updated README file)
----
 
 ## 🏆 Skill Level Classification
 
@@ -167,12 +162,9 @@ else:
 * 📊 Real-time performance tracking
 * 🏆 Skill level classification
 * 🎨 Interactive and user-friendly UI
-<<<<<<< HEAD
-=======
 
 ---
 
->>>>>>> 34178c2 (Added image folder and updated README file)
 ## ✨ Features
 
 ### 🧠 Adaptive Quiz Engine
@@ -360,8 +352,6 @@ Your browser will open automatically at `http://localhost:8501` 🎉
 
 ## 📸 Screenshots
 
-<<<<<<< HEAD
-=======
 ### 🔐 Login Page
 ![Login Page](images/login.png)
 >>>>>>> 34178c2 (Added image folder and updated README file)
