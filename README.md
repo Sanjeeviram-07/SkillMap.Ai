@@ -85,7 +85,7 @@ When a streak threshold is hit, **both streaks are reset to 0** so the next tran
 All performance is tracked per-difficulty level (`diff_scores`) and shown as a breakdown on the Results page.
 
 ---
-# 🧠 AI-Based Adaptive Quiz System
+## 🧠 AI-Based Adaptive Quiz System
 
 ## 📌 Overview
 
