@@ -131,7 +131,10 @@ After completing the quiz, user performance is evaluated using accuracy.
 python
 accuracy = int(score / TOTAL * 100)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 34178c2 (Added image folder and updated README file)
 ---
 
 ## 🏆 Skill Level Classification
@@ -164,6 +167,12 @@ else:
 * 📊 Real-time performance tracking
 * 🏆 Skill level classification
 * 🎨 Interactive and user-friendly UI
+<<<<<<< HEAD
+=======
+
+---
+
+>>>>>>> 34178c2 (Added image folder and updated README file)
 ## ✨ Features
 
 ### 🧠 Adaptive Quiz Engine
@@ -351,18 +360,32 @@ Your browser will open automatically at `http://localhost:8501` 🎉
 
 ## 📸 Screenshots
 
+<<<<<<< HEAD
+=======
+### 🔐 Login Page
+![Login Page](images/login.png)
+>>>>>>> 34178c2 (Added image folder and updated README file)
 
-| Page | Screenshot |
-|---|---|
-| 🔐 Login | `screenshots/login.png` |
-| 🧩 Domain Selection | `screenshots/domain.png` |
-| 📝 Quiz in Progress | `screenshots/quiz.png` |
-| 📊 Results Page | `screenshots/results.png` |
-| 📖 AI Learning Content | `screenshots/learning.png` |
-| 📈 Performance Dashboard | `screenshots/dashboard.png` |
-| 📄 PDF Chat | `screenshots/pdf_chat.png` |
+### 🧩 Domain Selection
+![Domain Selection](images/domain.png)
+
+### 📝 Quiz in Progress
+![Quiz Page](images/quiz.png)
+
+### 📊 Results Page
+![Results Page](images/results.png)
+
+### 📖 AI Learning Content
+![Learning Page](images/learning.png)
+
+### 📈 Performance Dashboard
+![Performance Dashboard](images/dashboard.png)
+
+### 📄 PDF Chat
+![PDF Chat](images/pdf_chat.png)
 
 ---
+
 
 ## 📁 Project Structure
 
@@ -422,6 +445,9 @@ skillmap-ai/
 
 ## 🤝 Contributing
 Authors Sivabalan And SanjeeviRam.
+
+## Authors : 
+  **sivabalan** And **SanjeeviRam**.
 
 Contributions are welcome and appreciated!
 
