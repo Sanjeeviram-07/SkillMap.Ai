@@ -3,10 +3,10 @@ from views.styles import inject_global_css
 
 DOMAINS = ["Networking", "AI & ML", "Cloud Computing", "Business Analyst"]
 DOMAIN_META = {
-    "Networking":       {"icon": "🌐", "desc": "Protocols, OSI model, routing & switching"},
-    "AI & ML":          {"icon": "🤖", "desc": "Machine learning, neural networks & data science"},
-    "Cloud Computing":  {"icon": "☁️",  "desc": "IaaS, PaaS, SaaS, AWS, Azure & GCP"},
-    "Business Analyst": {"icon": "📊", "desc": "KPIs, requirements & stakeholder management"},
+    "Networking":       {"icon": '<img src="https://img.icons8.com/fluency/512/globe.png" width="28" style="vertical-align:-5px;">', "desc": "Protocols, OSI model, routing & switching"},
+    "AI & ML":          {"icon": '<img src="https://img.icons8.com/fluency/512/bot.png" width="28" style="vertical-align:-5px;">', "desc": "Machine learning, neural networks & data science"},
+    "Cloud Computing":  {"icon": '<img src="https://img.icons8.com/fluency/512/cloud.png" width="28" style="vertical-align:-5px;">', "desc": "IaaS, PaaS, SaaS, AWS, Azure & GCP"},
+    "Business Analyst": {"icon": '<img src="https://img.icons8.com/fluency/512/bar-chart.png" width="28" style="vertical-align:-5px;">', "desc": "KPIs, requirements & stakeholder management"},
 }
 
 def render():
@@ -42,8 +42,10 @@ def render():
         domain = st.selectbox("Domain", DOMAINS, label_visibility="collapsed", key="domain_picker")
 
         meta = DOMAIN_META.get(domain, {})
+        default_icon = '<img src="https://img.icons8.com/fluency/512/books.png" width="28">'
+        domain_icon = meta.get('icon', default_icon)
         st.markdown(f"""<div class="domain-preview">
-<span class="domain-icon">{meta.get('icon','📚')}</span>
+<span class="domain-icon">{domain_icon}</span>
 <div>
   <div class="domain-name">{domain}</div>
   <div class="domain-desc">{meta.get('desc','')}</div>
@@ -64,13 +66,15 @@ def render():
                             "question_buffer", "current_difficulty",
                             "correct_streak", "wrong_streak",
                             "response_times", "last_time", "last_correct",
-                            "question_start_time", "diff_scores", "answer_log"]:
+                            "question_start_time", "diff_scores", "answer_log", "quiz_attempted", "_quiz_saved"]:
                     st.session_state.pop(key, None)
                 st.rerun()
         else:
-            st.success(f"🎯 Domain locked: **{st.session_state['selected_domain']}**")
+            st.markdown(f'<div style="background:rgba(78,190,123,0.15);border:1px solid rgba(78,190,123,0.4);border-radius:8px;padding:0.6rem 1rem;color:#4EBE7B;font-weight:600;margin:0.5rem 0;">'
+             f'<img src="https://img.icons8.com/fluency/512/bullseye.png" width="24" style="vertical-align:-5px; margin-right:5px;"> Domain locked: <strong>{st.session_state["selected_domain"]}</strong></div>',
+             unsafe_allow_html=True)
             st.info("Ready to test your knowledge?")
-            if st.button("🚀 Start Quiz", use_container_width=True):
+            if st.button("Start Quiz", use_container_width=True):
                 st.session_state.page = "Quiz"
                 # Reset readiness for next time
                 st.session_state["ready_to_start"] = False

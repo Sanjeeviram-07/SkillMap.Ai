@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 # Import modular routers
-from api.routes import learn, quiz, stream
+from api.routes import learn, quiz, stream, auth
 
 app = FastAPI(
     title="Agentic Adaptive Learning System API",
@@ -11,12 +11,16 @@ app = FastAPI(
     version="1.0.0"
 )
 
+import os
+
 # ── CORS Configuration ─────────────────────────────────────────────────────────
-# Essential for allowing the Streamlit frontend (usually on port 8501)
-# to communicate with the FastAPI backend (usually on port 8000).
+# In production, specify actual frontend origins (e.g., Streamlit Cloud URL)
+frontend_url = os.getenv("FRONTEND_URL", "*")
+origins = [frontend_url] if frontend_url != "*" else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify actual frontend origins
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -26,6 +30,7 @@ app.add_middleware(
 app.include_router(learn.router)
 app.include_router(quiz.router)
 app.include_router(stream.router)
+app.include_router(auth.router)
 
 @app.get("/")
 async def root():

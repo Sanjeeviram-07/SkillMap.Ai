@@ -1,13 +1,53 @@
 import streamlit as st
 from views.styles import inject_global_css
+from services.db_service import save_quiz_attempt
 
 def _diff_display(d):
     c, t = d["correct"], d["total"]
     if t == 0: return "—", "No data"
     return f"{c}/{t}", f"{int(c/t*100)}%"
 
+def _detect_weak_topics(diff_scores):
+    """Identify difficulty levels where accuracy < 50%."""
+    weak = []
+    for level, data in diff_scores.items():
+        if data["total"] > 0 and (data["correct"] / data["total"]) < 0.5:
+            weak.append(f"{level} ({data['correct']}/{data['total']})")
+    return weak
+
 def render():
     inject_global_css()
+
+    # ── Auto-save quiz attempt to DB (once per completion) ──
+    if not st.session_state.get("_quiz_saved", False):
+        user = st.session_state.get("user")
+        domain = st.session_state.get("selected_domain", "Unknown")
+        score = st.session_state.get("score", 0)
+        diff_scores = st.session_state.get("diff_scores", {
+            "Easy": {"correct": 0, "total": 0},
+            "Medium": {"correct": 0, "total": 0},
+            "Hard": {"correct": 0, "total": 0},
+        })
+        total = 15
+        accuracy = round((score / total) * 100, 1) if total > 0 else 0.0
+        curr_diff = st.session_state.get("current_difficulty", "Mixed")
+        weak = _detect_weak_topics(diff_scores)
+
+        if user and user.get("id"):
+            try:
+                save_quiz_attempt(
+                    user_id=user["id"],
+                    topic=domain,
+                    difficulty=curr_diff,
+                    total_questions=total,
+                    correct_answers=score,
+                    accuracy=accuracy,
+                    weak_topics=weak,
+                )
+                st.session_state["_quiz_saved"] = True
+            except Exception as e:
+                st.warning(f"Could not save quiz attempt: {e}")
+
     st.markdown("""
 <style>
 .result-hero {
@@ -108,18 +148,19 @@ def render():
 </div>""", unsafe_allow_html=True)
 
     # Motivation
-    st.markdown(f'<div class="motivation-card">💬 &nbsp; "{motivation}"</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="motivation-card"><img src="https://img.icons8.com/fluency/512/speech-bubble-with-dots.png" width="24" style="vertical-align:-5px; margin-right:5px;"> &nbsp; "{motivation}"</div>', unsafe_allow_html=True)
 
     # Actions
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("📚 View Weak Topics", use_container_width=True):
+        if st.button("View Weak Topics", use_container_width=True):
             st.session_state.page = "Learning"
             st.rerun()
     with col2:
-        if st.button("🏠 Back to Home", use_container_width=True):
+        if st.button("Back to Home", use_container_width=True):
             for k, v in [("question_num",1),("score",0),("current_question",None),
                          ("diff_scores",{"Easy":{"correct":0,"total":0},"Medium":{"correct":0,"total":0},"Hard":{"correct":0,"total":0}})]:
                 st.session_state[k] = v
+            st.session_state["_quiz_saved"] = False
             st.session_state.page = "Home"
             st.rerun()

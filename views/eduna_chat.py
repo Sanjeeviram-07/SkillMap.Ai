@@ -12,15 +12,40 @@ from services.groq_service import groq_service
 logger = logging.getLogger(__name__)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
-EDUNA_SYSTEM_MSG = """You are Eduna, a friendly and concise AI learning assistant.
+EDUNA_SYSTEM_MSG = """You are **Eduna**, an educational AI assistant designed to help users learn **only** the following domains:
 
-Rules:
-- Keep responses short (2-4 sentences max unless the user asks for detail).
-- Be encouraging and supportive.
-- If asked about a topic, explain it simply and clearly.
-- Use bullet points for lists.
-- Never say "As an AI..." — just answer directly.
-- If you don't know something, say so honestly.
+* Networking
+* Cloud Computing
+* Business Analytics
+* Artificial Intelligence (AI) & Machine Learning (ML)
+
+### Core Rules:
+
+1. You must **only explain, discuss, and teach study-related topics** within the above domains.
+2. Do **not** answer or engage in topics outside these domains under any circumstances.
+3. If a user asks about unrelated topics (e.g., entertainment, politics, health, general chit-chat), respond with:
+   "I am designed to assist only with study topics related to Networking, Cloud Computing, Business Analytics, and AI & ML."
+4. Keep responses:
+   * Educational
+   * Clear and structured
+   * Focused on concepts, examples, and practical understanding
+5. Avoid:
+   * Personal opinions
+   * Casual conversation
+   * Non-academic discussions
+   * Irrelevant elaboration
+6. When possible:
+   * Provide real-world examples
+   * Use simple explanations for beginners
+   * Break down complex concepts step-by-step
+
+### Behavior:
+
+* Act like a **professional tutor**
+* Stay **strictly within study scope**
+* Prioritize **learning clarity over verbosity**
+
+Your goal is to help users **master technical concepts** in the allowed domains—nothing else.
 """
 
 EDUNA_MODEL = "llama-3.1-8b-instant"
@@ -290,7 +315,7 @@ def render_eduna_chatbot():
     if not st.session_state.eduna_open:
         cols = st.columns([5, 1])
         with cols[1]:
-            if st.button("💬 Eduna!", key="eduna_open_btn", use_container_width=True):
+            if st.button("Eduna!", key="eduna_open_btn", use_container_width=True):
                 st.session_state.eduna_open = True
                 st.rerun()
         return
@@ -304,7 +329,7 @@ def render_eduna_chatbot():
     st.markdown("""
 <div class="eduna-hdr">
     <div class="eduna-hdr-left">
-        <div class="eduna-hdr-avatar">🎓</div>
+        <div class="eduna-hdr-avatar"><img src="https://img.icons8.com/fluency/512/graduation-cap.png" width="24" style="vertical-align:-5px; margin-right:5px;"></div>
         <div>
             <p class="eduna-hdr-title">Eduna Assistant</p>
             <p class="eduna-hdr-sub">Powered by Groq · Llama 3.1</p>
@@ -339,7 +364,7 @@ def render_eduna_chatbot():
             else:
                 bubbles_html += f"""
 <div class="emsg emsg-bot">
-    <span class="bot-label">🎓 Eduna</span>
+    <span class="bot-label"><img src="https://img.icons8.com/fluency/512/graduation-cap.png" width="24" style="vertical-align:-5px; margin-right:5px;"> Eduna</span>
     {msg["content"]}
 </div>"""
 

@@ -1,11 +1,12 @@
 import streamlit as st
 from views.styles import inject_global_css
 from views import home, domain, quiz, result, learning, dashboard, pdf_chat, auth
+from services.db_service import init_db
 
 # ── Page Config ──
 st.set_page_config(
     page_title="SkillMap.ai",
-    page_icon="🎓",
+    page_icon="https://img.icons8.com/fluency/512/graduation-cap.png",
     layout="wide"
 )
 
@@ -93,11 +94,11 @@ toggle_col, _ = st.columns([0.05, 0.95])
 
 with toggle_col:
     if st.session_state.sidebar_open:
-        if st.button("⬅️", key="close_sidebar"):
+        if st.button("<<", key="close_sidebar", help="Close Sidebar"):
             st.session_state.sidebar_open = False
             st.rerun()
     else:
-        if st.button("➡️", key="open_sidebar"):
+        if st.button(">>", key="open_sidebar", help="Open Sidebar"):
             st.session_state.sidebar_open = True
             st.rerun()
 
@@ -114,20 +115,20 @@ with sidebar_col:
         # Logo
         st.markdown("""
 <div class="logo">
-  <div style="font-size:2rem;">🎓</div>
+  <div style="font-size:2rem;"><img src="https://img.icons8.com/fluency/512/graduation-cap.png" width="48"></div>
   <div style="font-weight:800;font-size:1.2rem;color:white;">SkillMap.ai</div>
   <div style="font-size:0.7rem;color:gray;">Beta · v1.0</div>
 </div>
 """, unsafe_allow_html=True)
 
         NAV = [
-            ("Home",      "🏠"),
-            ("Domain",    "🧩"),
-            ("Quiz",      "📝"),
-            ("Result",    "📊"),
-            ("Learning",  "📖"),
-            ("Dashboard", "📈"),
-            ("PDF Chat",  "📄"),
+            ("Home",      "https://img.icons8.com/fluency/512/home.png"),
+            ("Domain",    "https://img.icons8.com/fluency/512/puzzle.png"),
+            ("Quiz",      "https://img.icons8.com/fluency/512/edit-property.png"),
+            ("Result",    "https://img.icons8.com/fluency/512/bar-chart.png"),
+            ("Learning",  "https://img.icons8.com/fluency/512/open-book.png"),
+            ("Dashboard", "https://img.icons8.com/fluency/512/positive-dynamic.png"),
+            ("PDF Chat",  "https://img.icons8.com/fluency/512/document.png"),
         ]
 
         active = st.session_state.page
@@ -135,19 +136,27 @@ with sidebar_col:
         for page_name, icon in NAV:
             if active == page_name:
                 st.markdown(
-                    f'<div class="active-nav">{icon} {page_name}</div>',
+                    f'<div class="active-nav"><img src="{icon}" width="24" style="vertical-align:-5px; margin-right:8px;"> {page_name}</div>',
                     unsafe_allow_html=True
                 )
             else:
-                if st.button(f"{icon} {page_name}", key=f"nav_{page_name}", use_container_width=True):
-                    st.session_state.page = page_name
-                    st.rerun()
+                col1, col2 = st.columns([0.15, 0.85], gap="small")
+                with col1:
+                    st.markdown(f'<div style="margin-top:10px;"><img src="{icon}" width="24"></div>', unsafe_allow_html=True)
+                with col2:
+                    if st.button(page_name, key=f"nav_{page_name}", use_container_width=True):
+                        st.session_state.page = page_name
+                        st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
-
-        if st.button("🚪 Logout", use_container_width=True):
-            del st.session_state["user"]
-            st.rerun()
+        
+        col1, col2 = st.columns([0.15, 0.85], gap="small")
+        with col1:
+            st.markdown(f'<div style="margin-top:10px;"><img src="https://img.icons8.com/fluency/512/exit.png" width="24"></div>', unsafe_allow_html=True)
+        with col2:
+            if st.button("Logout", use_container_width=True):
+                del st.session_state["user"]
+                st.rerun()
 
 # ── Main Content ──
 with main_col:
@@ -157,3 +166,6 @@ with main_col:
     else:
         st.error(f"Page '{st.session_state.page}' not found.")
     st.markdown('</div>', unsafe_allow_html=True)
+
+# Trigger reload
+init_db()

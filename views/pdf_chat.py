@@ -341,7 +341,7 @@ def render():
     # ── 1. Header ────────────────────────────────────────────────────────────
     st.markdown("""
 <div class="pdf-hdr">
-    <div class="pdf-hdr-icon">📄</div>
+    <div class="pdf-hdr-icon"><img src="https://img.icons8.com/fluency/512/document.png" width="24" style="vertical-align:-5px; margin-right:5px;"></div>
     <div>
         <p class="pdf-hdr-title">PDF Chat Assistant</p>
         <p class="pdf-hdr-sub">Upload a document and ask intelligent questions</p>
@@ -351,7 +351,7 @@ def render():
 
     # ── 2. Upload Zone ────────────────────────────────────────────────────────
     st.markdown('<div class="pdf-upload-zone">', unsafe_allow_html=True)
-    st.markdown('<div class="pdf-upload-label">📤 Document Upload</div>', unsafe_allow_html=True)
+    st.markdown('<div class="pdf-upload-label"><img src="https://img.icons8.com/fluency/512/upload.png" width="24" style="vertical-align:-5px; margin-right:5px;"> Document Upload</div>', unsafe_allow_html=True)
 
     uploaded_file = st.file_uploader(
         "Select PDF", type=["pdf"], label_visibility="collapsed", key="pdf_uploader"
@@ -386,7 +386,7 @@ def render():
         st.markdown("""
 <div class="pdf-messages-wrap">
     <div class="pdf-empty">
-        <div class="e-icon">📂</div>
+        <div class="e-icon"><img src="https://img.icons8.com/fluency/512/opened-folder.png" width="24" style="vertical-align:-5px; margin-right:5px;"></div>
         <div class="e-title">No Document Loaded</div>
         <div class="e-sub">Upload a PDF above to begin chatting.</div>
     </div>
@@ -412,7 +412,7 @@ def render():
             else:
                 bubbles += f"""
 <div class="pmsg pmsg-bot">
-    <span class="bot-tag">📄 Assistant</span>
+    <span class="bot-tag"><img src="https://img.icons8.com/fluency/512/document.png" width="24" style="vertical-align:-5px; margin-right:5px;"> Assistant</span>
     {msg["content"]}
 </div>"""
 

@@ -149,26 +149,28 @@ async def generate_with_groq(prompt: str, task: Optional[str] = None) -> str:
     from services.groq_service import call_groq_api
     return await call_groq_api(prompt=prompt, task=task)
 
-async def generate_response(prompt: str, task: Optional[str] = None) -> Any:
+async def generate_response(prompt: str, task: Optional[str] = None) -> tuple[Any, str]:
     """
     Unified AI Orchestrator with Retries:
     - Retries up to 2 times if it hits empty text or invalid JSON.
     - Fails over to Groq with task-specific model selection.
+    Returns a tuple of (parsed_data, source_provider) where source_provider
+    is either "Ollama" or "Groq".
     """
     for attempt in range(2):
         try:
             logger.info("Using Ollama")
             res = await generate_with_ollama(prompt)
-            print("🟢 Model used: Ollama (Local)")
-            return _extract_json(res)
+            print("https://img.icons8.com/fluency/512/green-circle.png Model used: Ollama (Local)")
+            return _extract_json(res), "Ollama"
         except Exception as e:
             logger.warning(f"[AI Router] Ollama attempt {attempt + 1} failed: {str(e)}")
 
     logger.info(f"Fallback to Groq for task: {task}")
     try:
         res = await generate_with_groq(prompt, task=task)
-        print(f"🔵 Model used: Groq (Cloud) | Task: {task}")
-        return _extract_json(res)
+        print(f"https://img.icons8.com/fluency/512/blue-circle.png Model used: Groq (Cloud) | Task: {task}")
+        return _extract_json(res), "Groq"
     except Exception as groq_err:
         logger.error(f"[AI Router] Groq fallback failed: {str(groq_err)}")
         raise RuntimeError(f"CRITICAL: Both Local and Cloud AI Generators failed: {str(groq_err)}")
@@ -212,7 +214,7 @@ async def generate_text_response(prompt: str, task: Optional[str] = None) -> str
         try:
             logger.info("Using Ollama for text response")
             res = await generate_with_ollama(prompt)
-            print("🟢 Model used: Ollama (Local) [Text]")
+            print("https://img.icons8.com/fluency/512/green-circle.png Model used: Ollama (Local) [Text]")
             return res
         except Exception as e:
             logger.warning(f"[AI Router Text] Ollama attempt {attempt + 1} failed: {str(e)}")
@@ -220,7 +222,7 @@ async def generate_text_response(prompt: str, task: Optional[str] = None) -> str
     logger.info(f"Fallback to Groq for text task: {task}")
     try:
         res = await generate_with_groq(prompt, task=task)
-        print(f"🔵 Model used: Groq (Cloud) [Text] | Task: {task}")
+        print(f"https://img.icons8.com/fluency/512/blue-circle.png Model used: Groq (Cloud) [Text] | Task: {task}")
         return res
     except Exception as groq_err:
         logger.error(f"[AI Router Text] Groq fallback failed: {str(groq_err)}")
@@ -368,7 +370,7 @@ IMPORTANT RULES
 """.strip()
 
     logger.info("Generating learning content async | topic=%s level=%s", topic, level)
-    data = await generate_response(prompt, task="learning")
+    data, _source = await generate_response(prompt, task="learning")
 
     return LearningContent(**data)
 
@@ -413,7 +415,7 @@ Rules:
         "Generating quiz async | topic=%s level=%s num_questions=%d",
         topic, level, num_questions
     )
-    items = await generate_response(prompt, task="quiz")
+    items, _source = await generate_response(prompt, task="quiz")
 
     if not isinstance(items, list):
         raise ValueError(f"Expected a JSON array for quiz questions, got: {type(items)}")
@@ -443,9 +445,9 @@ Respond ONLY with a valid JSON object in this EXACT schema:
 """.strip()
 
     logger.info("Generating quiz question async | topic=%s difficulty=%s", topic, difficulty)
-    data = await generate_response(prompt, task="quiz")
+    data, _source = await generate_response(prompt, task="quiz")
 
-    return QuizQuestion(**data)
+    return QuizQuestion(**data, source=_source)
 
 async def generate_adaptive_questions(
     topic: str,
@@ -570,10 +572,14 @@ HARD:
 """.strip()
 
     logger.info("Generating adaptive quiz questions async | topic=%s difficulty=%s", topic, difficulty)
-    items = await generate_response(prompt, task="quiz")
+    items, source_provider = await generate_response(prompt, task="quiz")
 
     if not isinstance(items, list):
         raise ValueError(f"Expected a JSON array for quiz questions, got: {type(items)}")
 
-    return [QuizQuestion(**item) for item in items]
+    questions = []
+    for item in items:
+        item["source"] = source_provider
+        questions.append(QuizQuestion(**item))
+    return questions
 

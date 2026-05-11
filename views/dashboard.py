@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from views.styles import inject_global_css
+from services.db_service import get_quiz_history, get_quiz_stats
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
@@ -50,14 +51,14 @@ def _generate_insights(answer_log: list, diff_scores: dict, response_times: list
 
     if ds["Medium"]["total"] > 0 and ds["Hard"]["total"] > 0:
         if medium_acc > hard_acc:
-            insights.append(f"📊 You perform better on **Medium** ({medium_acc:.0f}%) than **Hard** ({hard_acc:.0f}%) questions.")
+            insights.append(f'<img src="https://img.icons8.com/fluency/512/bar-chart.png" width="24" style="vertical-align:-5px; margin-right:5px;"> You perform better on **Medium** ({medium_acc:.0f}%) than **Hard** ({hard_acc:.0f}%) questions.')
         elif hard_acc >= medium_acc:
-            insights.append(f"🔥 Impressive! You're performing equally well on **Hard** ({hard_acc:.0f}%) and **Medium** ({medium_acc:.0f}%) questions.")
+            insights.append(f'<img src="https://img.icons8.com/fluency/512/fire-element.png" width="24" style="vertical-align:-5px; margin-right:5px;"> Impressive! You\'re performing equally well on **Hard** ({hard_acc:.0f}%) and **Medium** ({medium_acc:.0f}%) questions.')
     elif ds["Easy"]["total"] > 0 and ds["Medium"]["total"] > 0:
         if easy_acc > medium_acc:
-            insights.append(f"📉 You're stronger on **Easy** ({easy_acc:.0f}%) than **Medium** ({medium_acc:.0f}%). Keep pushing!")
+            insights.append(f'<img src="https://img.icons8.com/fluency/512/negative-dynamic.png" width="24" style="vertical-align:-5px; margin-right:5px;"> You\'re stronger on **Easy** ({easy_acc:.0f}%) than **Medium** ({medium_acc:.0f}%). Keep pushing!')
         else:
-            insights.append(f"📈 You're rising — stronger on **Medium** ({medium_acc:.0f}%) than **Easy** ({easy_acc:.0f}%).")
+            insights.append(f'<img src="https://img.icons8.com/fluency/512/positive-dynamic.png" width="24" style="vertical-align:-5px; margin-right:5px;"> You\'re rising — stronger on **Medium** ({medium_acc:.0f}%) than **Easy** ({easy_acc:.0f}%).')
 
     # 2. Response time trend
     if len(response_times) >= 4:
@@ -66,7 +67,7 @@ def _generate_insights(answer_log: list, diff_scores: dict, response_times: list
         if second_half < first_half * 0.9:
             insights.append(f"⚡ Your response time is improving — avg dropped from **{first_half:.1f}s** to **{second_half:.1f}s**.")
         elif second_half > first_half * 1.1:
-            insights.append(f"🕐 You're spending more time per question lately (**{second_half:.1f}s** vs earlier **{first_half:.1f}s**) — this often means harder questions.")
+            insights.append(f'<img src="https://img.icons8.com/fluency/512/clock.png" width="24" style="vertical-align:-5px; margin-right:5px;"> You\'re spending more time per question lately (**{second_half:.1f}s** vs earlier **{first_half:.1f}s**) — this often means harder questions.')
         else:
             insights.append(f"⏱ Your response time is steady at around **{second_half:.1f}s** per question.")
 
@@ -78,15 +79,15 @@ def _generate_insights(answer_log: list, diff_scores: dict, response_times: list
         if prev_5:
             prev_acc = sum(1 for x in prev_5 if x["correct"]) / len(prev_5) * 100
             if last_acc > prev_acc + 10:
-                insights.append(f"🚀 Accuracy jumped from **{prev_acc:.0f}%** to **{last_acc:.0f}%** in the last 5 questions — great momentum!")
+                insights.append(f'<img src="https://img.icons8.com/fluency/512/rocket.png" width="24" style="vertical-align:-5px; margin-right:5px;"> Accuracy jumped from **{prev_acc:.0f}%** to **{last_acc:.0f}%** in the last 5 questions — great momentum!')
             elif last_acc < prev_acc - 10:
                 insights.append(f"⚠️ Accuracy dipped from **{prev_acc:.0f}%** to **{last_acc:.0f}%** recently. A short review session may help.")
             else:
-                insights.append(f"📌 Your accuracy has been consistent around **{last_acc:.0f}%** in the last 5 questions.")
+                insights.append(f'<img src="https://img.icons8.com/fluency/512/pin.png" width="24" style="vertical-align:-5px; margin-right:5px;"> Your accuracy has been consistent around **{last_acc:.0f}%** in the last 5 questions.')
         else:
-            insights.append(f"🎯 Accuracy on the last 5 questions: **{last_acc:.0f}%**.")
+            insights.append(f'<img src="https://img.icons8.com/fluency/512/bullseye.png" width="24" style="vertical-align:-5px; margin-right:5px;"> Accuracy on the last 5 questions: **{last_acc:.0f}%**.')
 
-    return insights[:3] if insights else ["📋 Complete more questions to unlock personalized insights."]
+    return insights[:3] if insights else ['<img src="https://img.icons8.com/fluency/512/clipboard.png" width="24" style="vertical-align:-5px;margin-right:5px;"> Complete more questions to unlock personalized insights.']
 
 def _generate_report_markdown(user_name, domain, accuracy, q_answered, skill_pct, diff_scores, level_label, pdf_chat_count, response_times):
     import datetime
@@ -306,6 +307,59 @@ DASHBOARD_CSS = """
     font-size: 0.9rem;
 }
 .db-empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+
+/* ── Quiz History ── */
+.qh-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.qh-stat-card {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 1.2rem 1rem;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+.qh-stat-value { font-size: 1.6rem; font-weight: 800; color: #FFFFFF; }
+.qh-stat-label { font-size: 0.68rem; font-weight: 600; color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 1px; margin-top: 0.3rem; }
+
+.qh-attempt-card {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.65rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    transition: transform 0.15s ease;
+}
+.qh-attempt-card:hover { transform: translateY(-1px); }
+.qh-attempt-left { flex: 1; }
+.qh-attempt-topic { font-weight: 700; font-size: 0.95rem; color: #FFFFFF; }
+.qh-attempt-meta { font-size: 0.78rem; color: rgba(255,255,255,0.55); margin-top: 0.2rem; }
+.qh-attempt-right { text-align: right; }
+.qh-attempt-score { font-size: 1.3rem; font-weight: 800; }
+.qh-attempt-acc { font-size: 0.75rem; color: rgba(255,255,255,0.65); }
+
+.qh-weak-pill {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    background: rgba(217, 92, 92, 0.15);
+    color: #D95C5C;
+    border: 1px solid rgba(217, 92, 92, 0.3);
+    margin-right: 0.4rem;
+    margin-top: 0.4rem;
+}
 </style>
 """
 
@@ -349,7 +403,7 @@ def render():
     st.markdown(f"""
 <div class="db-header">
   <div>
-    <div class="db-domain-title">📊 {domain}</div>
+    <div class="db-domain-title"><img src="https://img.icons8.com/fluency/512/bar-chart.png" width="24" style="vertical-align:-5px; margin-right:5px;"> {domain}</div>
     <div class="db-subtitle">Your Performance Overview</div>
     <span class="db-level-badge" style="background:{badge_bg}; color:{badge_color}; border-color:{badge_color}40;">
       {level_label}
@@ -362,12 +416,12 @@ def render():
     if q_answered == 0:
         st.markdown("""
 <div class="db-empty">
-  <div class="db-empty-icon">📋</div>
+  <div class="db-empty-icon"><img src="https://img.icons8.com/fluency/512/clipboard.png" width="24" style="vertical-align:-5px; margin-right:5px;"></div>
   <div><strong>No quiz data yet.</strong></div>
   <div>Complete at least one question to see your analytics.</div>
 </div>
 """, unsafe_allow_html=True)
-        if st.button("📝 Start Quiz", use_container_width=True):
+        if st.button("Start Quiz", use_container_width=True):
             st.session_state.page = "Quiz"
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
@@ -381,12 +435,12 @@ def render():
     st.markdown(f"""
 <div class="db-kpi-grid">
   <div class="db-kpi-card">
-    <div class="db-kpi-icon">🎯</div>
+    <div class="db-kpi-icon"><img src="https://img.icons8.com/fluency/512/bullseye.png" width="24" style="vertical-align:-5px; margin-right:5px;"></div>
     <div class="db-kpi-value">{accuracy:.0f}%</div>
     <div class="db-kpi-label">Accuracy</div>
   </div>
   <div class="db-kpi-card">
-    <div class="db-kpi-icon">📝</div>
+    <div class="db-kpi-icon"><img src="https://img.icons8.com/fluency/512/edit-property.png" width="24" style="vertical-align:-5px; margin-right:5px;"></div>
     <div class="db-kpi-value">{q_answered}</div>
     <div class="db-kpi-label">Questions Attempted</div>
   </div>
@@ -396,7 +450,7 @@ def render():
     <div class="db-kpi-label">Skill Score</div>
   </div>
   <div class="db-kpi-card">
-    <div class="db-kpi-icon">🔥</div>
+    <div class="db-kpi-icon"><img src="https://img.icons8.com/fluency/512/fire-element.png" width="24" style="vertical-align:-5px; margin-right:5px;"></div>
     <div class="db-kpi-value">{curr_diff}</div>
     <div class="db-kpi-label">Current Difficulty</div>
   </div>
@@ -429,7 +483,7 @@ def render():
         df_trend = pd.DataFrame(chart_data).set_index("Question")
         st.line_chart(df_trend, use_container_width=True, height=200)
     else:
-        st.caption("📈 Answer more questions to see the accuracy trend chart.")
+        st.caption('<img src="https://img.icons8.com/fluency/512/positive-dynamic.png" width="24" style="vertical-align:-5px; margin-right:5px;"> Answer more questions to see the accuracy trend chart.', unsafe_allow_html=True)
 
     # ── 5. DIFFICULTY ANALYSIS ────────────────────────────────────────────────
     st.markdown('<div class="db-section-title">Difficulty Breakdown</div>', unsafe_allow_html=True)
@@ -468,7 +522,7 @@ def render():
     st.markdown('<div class="db-section-title">Improvement Radar</div>', unsafe_allow_html=True)
     if skill < 0.40:
         css_cls = "db-alert-red"
-        icon    = "🔴"
+        icon    = "https://img.icons8.com/fluency/512/red-circle.png"
         title   = "⚠️ Improvement Needed"
         body    = (
             f"Your skill score for <strong>{domain}</strong> is <strong>{skill*100:.0f}%</strong>. "
@@ -477,15 +531,15 @@ def render():
         )
     elif skill < 0.70:
         css_cls = "db-alert-yellow"
-        icon    = "🟡"
-        title   = "📈 You're Making Progress"
+        icon    = "https://img.icons8.com/fluency/512/yellow-circle.png"
+        title   = "You're Making Progress"
         body    = (
             f"You're improving in <strong>{domain}</strong> with a skill score of <strong>{skill*100:.0f}%</strong>. "
             "Keep practicing consistently and aim for more Medium and Hard questions."
         )
     else:
         css_cls = "db-alert-green"
-        icon    = "🟢"
+        icon    = "https://img.icons8.com/fluency/512/green-circle.png"
         title   = "✅ Strong Performance"
         body    = (
             f"Excellent work in <strong>{domain}</strong>! Your skill score is <strong>{skill*100:.0f}%</strong>. "
@@ -509,11 +563,11 @@ def render():
     st.markdown('<div class="db-section-title">Actions</div>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("📖 Go to Learning", use_container_width=True):
+        if st.button("Go to Learning", use_container_width=True):
             st.session_state.page = "Learning"
             st.rerun()
     with col2:
-        if st.button("📝 Retake Quiz", use_container_width=True):
+        if st.button("Retake Quiz", use_container_width=True):
             # Reset quiz state
             for k, v in [
                 ("question_num", 1), ("score", 0),
@@ -529,10 +583,79 @@ def render():
                 }),
             ]:
                 st.session_state[k] = v
+            st.session_state["_quiz_saved"] = False
             st.session_state.page = "Quiz"
             st.rerun()
 
-    # ── 9. EXPORT REPORT ──────────────────────────────────────────────────────
+    # ── 9. QUIZ HISTORY (from DB) ────────────────────────────────────────────
+    user_id = user_data.get("id")
+    if user_id:
+        st.markdown('<div class="db-section-title">Quiz History</div>', unsafe_allow_html=True)
+
+        stats = get_quiz_stats(user_id)
+        history = get_quiz_history(user_id, limit=20)
+
+        # Aggregate KPIs
+        st.markdown(f"""
+<div class="qh-stats-grid">
+  <div class="qh-stat-card">
+    <div class="qh-stat-value">{stats['total_quizzes']}</div>
+    <div class="qh-stat-label">Total Quizzes</div>
+  </div>
+  <div class="qh-stat-card">
+    <div class="qh-stat-value">{stats['avg_accuracy']:.0f}%</div>
+    <div class="qh-stat-label">Avg Accuracy</div>
+  </div>
+  <div class="qh-stat-card">
+    <div class="qh-stat-value">{len(stats['weak_topics'])}</div>
+    <div class="qh-stat-label">Weak Areas</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+        # Weakest topics pills
+        if stats['weak_topics']:
+            pills_html = ''.join(
+                f'<span class="qh-weak-pill">{wt["topic"]} ({wt["avg_accuracy"]:.0f}%)</span>'
+                for wt in stats['weak_topics']
+            )
+            st.markdown(f'<div style="margin-bottom:1rem;">Weakest areas: {pills_html}</div>', unsafe_allow_html=True)
+
+        # Individual attempt cards
+        if history:
+            for attempt in history:
+                acc = attempt['accuracy']
+                acc_color = '#4EBE7B' if acc >= 70 else '#D1A551' if acc >= 40 else '#D95C5C'
+
+                # Format date
+                try:
+                    from datetime import datetime
+                    dt = datetime.fromisoformat(attempt['attempted_at'])
+                    date_str = dt.strftime('%b %d, %Y · %I:%M %p')
+                except Exception:
+                    date_str = attempt['attempted_at']
+
+                st.markdown(f"""
+<div class="qh-attempt-card">
+  <div class="qh-attempt-left">
+    <div class="qh-attempt-topic">{attempt['topic']}</div>
+    <div class="qh-attempt-meta">{attempt['difficulty']} · {date_str}</div>
+  </div>
+  <div class="qh-attempt-right">
+    <div class="qh-attempt-score" style="color:{acc_color}">{attempt['correct_answers']}/{attempt['total_questions']}</div>
+    <div class="qh-attempt-acc">{acc:.0f}% accuracy</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+        else:
+            st.markdown("""
+<div class="db-empty" style="padding:1.5rem;">
+  <div>No quiz attempts recorded yet.</div>
+  <div style="font-size:0.8rem;color:rgba(255,255,255,0.45);margin-top:0.3rem;">Complete a quiz to see your history here.</div>
+</div>
+""", unsafe_allow_html=True)
+
+    # ── 10. EXPORT REPORT ─────────────────────────────────────────────────────
     st.markdown('<div class="db-section-title">Documentation</div>', unsafe_allow_html=True)
     report_md = _generate_report_markdown(
         user_name, domain, accuracy, q_answered, skill_pct, 
@@ -540,7 +663,7 @@ def render():
     )
     
     st.download_button(
-        label="📄 Download Performance Report",
+        label="Download Performance Report",
         data=report_md,
         file_name=f"{user_name.replace(' ', '_')}_SkillMap_Report.md",
         mime="text/markdown",

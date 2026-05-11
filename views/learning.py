@@ -9,7 +9,7 @@ from views.eduna_chat import render_eduna_chatbot
 logger = logging.getLogger(__name__)
 
 # ── API Connection ─────────────────────────────────────────────────────────────
-API_BASE_URL = "http://localhost:8000"
+API_BASE_URL = st.secrets.get("API_BASE_URL", "http://localhost:8000")
 
 def _fetch_learning_content(domain: str, level: str) -> dict:
     """
@@ -86,11 +86,31 @@ def render():
 </style>
 """, unsafe_allow_html=True)
 
+    if not st.session_state.get("quiz_attempted", False):
+        st.markdown("""
+<div style="display:flex;justify-content:center;align-items:center;min-height:50vh;">
+  <div style="background:rgba(255,255,255,0.04);backdrop-filter:blur(12px);
+              border:1px solid rgba(255,255,255,0.08);border-radius:16px;
+              padding:2.5rem 3rem;text-align:center;max-width:480px;
+              box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;">⚠️</div>
+    <div style="font-size:1.15rem;font-weight:700;color:#FFFFFF;margin-bottom:1rem;">
+      Please attempt the quiz first before accessing learning content.
+    </div>
+  </div>
+</div>""", unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("Go to Quiz", use_container_width=True):
+                st.session_state.page = "Quiz"
+                st.rerun()
+        st.stop()
+
     domain = st.session_state.get("selected_domain", "Networking")
     score  = st.session_state.get("score", 0)
     level  = "Intermediate" # default simplified for UI proxy map
     
-    st.markdown('<div class="als-page-title">📖 Learning Room (Live Stream)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="als-page-title"><img src="https://img.icons8.com/fluency/512/open-book.png" width="24" style="vertical-align:-5px; margin-right:5px;"> Learning Room (Live Stream)</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="als-page-subtitle">Targeted material for <strong>{domain}</strong></div>', unsafe_allow_html=True)
 
     # Main Learning Content Area
@@ -116,7 +136,7 @@ def render():
         st.success(content["real_world"])
 
     if content.get("sources"):
-        st.markdown("### 🌐 Reliable Sources")
+        st.markdown('### <img src="https://img.icons8.com/fluency/512/globe.png" width="24" style="vertical-align:-5px; margin-right:5px;"> Reliable Sources', unsafe_allow_html=True)
         for source in content["sources"]:
             title = source.get("title", "External Link")
             url = source.get("url", "#")
@@ -124,14 +144,14 @@ def render():
 
     c1, c2 = st.columns(2)
     with c1:
-        if st.button("🚀 Start Targeted Quiz", use_container_width=True):
+        if st.button("Start Targeted Quiz", use_container_width=True):
             for k,v in [("question_num",1),("score",0),("current_question",None),
                         ("diff_scores",{"Easy":{"correct":0,"total":0},"Medium":{"correct":0,"total":0},"Hard":{"correct":0,"total":0}})]:
                 st.session_state[k] = v
             st.session_state.page = "Quiz"
             st.rerun()
     with c2:
-        if st.button("📈 View Dashboard", use_container_width=True):
+        if st.button("View Dashboard", use_container_width=True):
             st.session_state.page = "Dashboard"
             st.rerun()
 

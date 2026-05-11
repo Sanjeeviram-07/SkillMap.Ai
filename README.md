@@ -85,6 +85,7 @@ When a streak threshold is hit, **both streaks are reset to 0** so the next tran
 All performance is tracked per-difficulty level (`diff_scores`) and shown as a breakdown on the Results page.
 
 ---
+
 ## 🧠 AI-Based Adaptive Quiz System
 
 ## 📌 Overview
@@ -130,7 +131,6 @@ After completing the quiz, user performance is evaluated using accuracy.
 
 python
 accuracy = int(score / TOTAL * 100)
-
 
 ## 🏆 Skill Level Classification
 
@@ -433,10 +433,9 @@ skillmap-ai/
 ---
 
 ## 🤝 Contributing
-Authors Sivabalan And SanjeeviRam.
 
 ## Authors : 
-  **sivabalan** And **SanjeeviRam**.
+  **sivabalan** And SanjeeviRam.
 
 Contributions are welcome and appreciated!
 

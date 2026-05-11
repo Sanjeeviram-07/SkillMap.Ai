@@ -1,59 +1,40 @@
 import streamlit as st
-import sqlite3
-import bcrypt
+import streamlit.components.v1 as components
+import os
 import re
 
-# ── DATABASE LOGIC ──
+from services.db_service import (
+    init_db, signup_user, login_user,
+    get_or_create_google_user,
+)
 
-DB_PATH = "users.db"
+# ── Firebase Google Auth Component ──
 
-def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            domain TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
-    conn.close()
+_component_func = components.declare_component(
+    "google_auth",
+    path=os.path.join(os.path.dirname(__file__), "google_auth_component"),
+)
 
-def hash_password(password):
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
-def check_password(password, hashed):
-    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
-
-def signup_user(name, email, password, domain):
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("INSERT INTO users (name, email, password_hash, domain) VALUES (?, ?, ?, ?)",
-                  (name, email, hash_password(password), domain))
-        conn.commit()
-        conn.close()
-        return True, "Account created successfully! Please Sign In."
-    except sqlite3.IntegrityError:
-        return False, "Email already exists. Please Sign In."
-    except Exception as e:
-        return False, f"An error occurred: {str(e)}"
-
-def login_user(email, password):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT * FROM users WHERE email = ?", (email,))
-    user = c.fetchone()
-    conn.close()
-    if user and check_password(password, user[3]):
-        return True, user
-    return False, "Invalid email or password."
 
 def validate_email(email):
     return re.match(r"[^@]+@[^@]+\.[^@]+", email)
+
+
+def firebase_google_login(comp_key="google_auth_btn"):
+    """Render the Firebase Google login component and handle results."""
+    result = _component_func(key=comp_key, default=None)
+
+    if result and isinstance(result, dict) and "uid" in result:
+        email = result.get("email")
+        name = result.get("name", "Google User")
+
+        user = get_or_create_google_user(email, name)
+
+        if user:
+            st.session_state["user"] = user
+            st.session_state["user_name"] = user["name"]
+            st.rerun()
+
 
 # ── CSS ──
 
@@ -89,8 +70,8 @@ html, body { margin: 0; padding: 0; }
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Transform the native stForm into the actual Card */
-div[data-testid="stForm"] {
+/* Transform the native container into the actual Card */
+div[data-testid="stVerticalBlock"]:has(> div:first-child .auth-title) {
     animation: slideUp 0.4s ease-out;
     background: rgba(255, 255, 255, 0.75) !important;
     backdrop-filter: blur(16px) !important;
@@ -102,10 +83,11 @@ div[data-testid="stForm"] {
     width: 100% !important;
     max-width: 420px !important;
     margin: 0 auto !important;
+    align-self: center !important;
 }
 
 /* Force dark text globally inside the card against Streamlit's dark theme */
-div[data-testid="stForm"] * {
+div[data-testid="stVerticalBlock"]:has(> div:first-child .auth-title) * {
     color: #2C2C2C !important;
 }
 
@@ -128,8 +110,8 @@ div[data-testid="stForm"] * {
 
 /* ---- Inputs ---- */
 /* Overall wrapper (input + eye icon) shares true white background */
-div[data-testid="stForm"] .stTextInput div[data-baseweb="input"],
-div[data-testid="stForm"] .stSelectbox > div > div {
+div[data-testid="stVerticalBlock"]:has(> div:first-child .auth-title) .stTextInput div[data-baseweb="input"],
+div[data-testid="stVerticalBlock"]:has(> div:first-child .auth-title) .stSelectbox > div > div {
     background-color: #FFFFFF !important;
     border: 1.5px solid #CBCBCB !important;
     border-radius: 10px !important;
@@ -138,12 +120,12 @@ div[data-testid="stForm"] .stSelectbox > div > div {
 }
 
 /* Remove Streamlit's inner dark background for base-input */
-div[data-testid="stForm"] div[data-baseweb="base-input"] {
+div[data-testid="stVerticalBlock"]:has(> div:first-child .auth-title) div[data-baseweb="base-input"] {
     background-color: transparent !important;
 }
 
 /* Actual input text field formatting */
-div[data-testid="stForm"] .stTextInput input {
+div[data-testid="stVerticalBlock"]:has(> div:first-child .auth-title) .stTextInput input {
     background-color: transparent !important;
     color: #2C2C2C !important;
     font-size: 0.95rem !important;
@@ -153,22 +135,22 @@ div[data-testid="stForm"] .stTextInput input {
 }
 
 /* Prevent browser autofill from darkening the background */
-div[data-testid="stForm"] .stTextInput input:-webkit-autofill {
+div[data-testid="stVerticalBlock"]:has(> div:first-child .auth-title) .stTextInput input:-webkit-autofill {
     -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset !important;
     -webkit-text-fill-color: #2C2C2C !important;
 }
 
 /* Focus highlighting */
-div[data-testid="stForm"] .stTextInput div[data-baseweb="input"]:focus-within,
-div[data-testid="stForm"] .stSelectbox > div > div:focus-within {
+div[data-testid="stVerticalBlock"]:has(> div:first-child .auth-title) .stTextInput div[data-baseweb="input"]:focus-within,
+div[data-testid="stVerticalBlock"]:has(> div:first-child .auth-title) .stSelectbox > div > div:focus-within {
     border-color: #6D8196 !important;
     box-shadow: 0 0 0 3px rgba(109, 129, 150, 0.15) !important;
 }
 
-div[data-testid="stForm"] .stTextInput input::placeholder { color: #9CA3AF !important; }
+div[data-testid="stVerticalBlock"]:has(> div:first-child .auth-title) .stTextInput input::placeholder { color: #9CA3AF !important; }
 
 /* Labels */
-div[data-testid="stForm"] [data-testid="stWidgetLabel"] p {
+div[data-testid="stVerticalBlock"]:has(> div:first-child .auth-title) [data-testid="stWidgetLabel"] p {
     font-size: 0.8rem !important;
     font-weight: 600 !important;
     color: #4A4A4A !important;
@@ -178,7 +160,7 @@ div[data-testid="stForm"] [data-testid="stWidgetLabel"] p {
 }
 
 /* ---- Primary button (submit) ---- */
-div[data-testid="stForm"] div[data-testid="stFormSubmitButton"] button {
+div[data-testid="stVerticalBlock"]:has(> div:first-child .auth-title) div[data-testid="stButton"] button {
     background: #6D8196 !important;
     color: #FFFFFF !important;
     font-weight: 700 !important;
@@ -191,10 +173,10 @@ div[data-testid="stForm"] div[data-testid="stFormSubmitButton"] button {
     transition: all 0.2s ease !important;
     margin-top: 1rem !important;
 }
-div[data-testid="stForm"] div[data-testid="stFormSubmitButton"] button p {
+div[data-testid="stVerticalBlock"]:has(> div:first-child .auth-title) div[data-testid="stButton"] button p {
     color: #FFFFFF !important; /* Force button text white */
 }
-div[data-testid="stForm"] div[data-testid="stFormSubmitButton"] button:hover {
+div[data-testid="stVerticalBlock"]:has(> div:first-child .auth-title) div[data-testid="stButton"] button:hover {
     background: #5a6b7d !important;
     box-shadow: 0 6px 15px rgba(109, 129, 150, 0.3) !important;
     color: #FFFFFF !important;
@@ -241,6 +223,25 @@ div[data-testid="stAlert"] {
     margin-top: 1rem !important;
 }
 
+/* ---- Divider ---- */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 0.8rem 0;
+    color: #9CA3AF;
+    font-size: 0.85rem;
+    font-family: 'Inter', sans-serif;
+}
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #E5E7EB;
+}
+.auth-divider:not(:empty)::before { margin-right: .5em; }
+.auth-divider:not(:empty)::after { margin-left: .5em; }
+
 /* Spaces */
 div[data-testid="stVerticalBlock"] > div { gap: 0.6rem; }
 </style>
@@ -262,16 +263,17 @@ def render():
     else:
         _render_signup()
 
+
 def _render_signin():
-    with st.form("signin_form", border=False):
+    with st.container():
         st.markdown("""
             <div class="auth-title">Welcome Back</div>
             <div class="auth-subtitle">Sign in to continue</div>
         """, unsafe_allow_html=True)
-        
+
         email = st.text_input("Email", placeholder="name@example.com")
         password = st.text_input("Password", type="password", placeholder="••••••••")
-        submitted = st.form_submit_button("Sign In", use_container_width=True)
+        submitted = st.button("Sign In", use_container_width=True)
 
         if submitted:
             if not email or not password:
@@ -279,14 +281,14 @@ def _render_signin():
             else:
                 success, result = login_user(email, password)
                 if success:
-                    st.session_state["user"] = {
-                        "id": result[0], "name": result[1],
-                        "email": result[2], "domain": result[4]
-                    }
-                    st.session_state["user_name"] = result[1]
+                    st.session_state["user"] = result
+                    st.session_state["user_name"] = result["name"]
                     st.rerun()
                 else:
                     st.error(result)
+
+        st.markdown("<div class='auth-divider'>or</div>", unsafe_allow_html=True)
+        firebase_google_login("signin")
 
     st.markdown('<div class="auth-switch-text">Don\'t have an account?</div>', unsafe_allow_html=True)
     if st.button("Create Account", key="go_signup", use_container_width=True):
@@ -295,12 +297,12 @@ def _render_signin():
 
 
 def _render_signup():
-    with st.form("signup_form", border=False):
+    with st.container():
         st.markdown("""
             <div class="auth-title">Create Account</div>
             <div class="auth-subtitle">Sign up to begin your learning journey</div>
         """, unsafe_allow_html=True)
-        
+
         name = st.text_input("Full Name", placeholder="John Doe")
         email = st.text_input("Email", placeholder="name@example.com")
 
@@ -311,9 +313,9 @@ def _render_signup():
             confirm = st.text_input("Confirm Password", type="password", placeholder="••••••••")
 
         domain = st.selectbox("Primary Domain",
-                              ["Networking", "AI & ML", "Cloud", "Business Analyst"])
+                              ["Networking", "AI & ML", "Cloud Computing", "Business Analyst"])
 
-        submitted = st.form_submit_button("Create Account", use_container_width=True)
+        submitted = st.button("Create Account", use_container_width=True)
 
         if submitted:
             if not all([name, email, password, confirm]):
@@ -332,6 +334,9 @@ def _render_signup():
                     st.rerun()
                 else:
                     st.error(msg)
+
+        st.markdown("<div class='auth-divider'>or</div>", unsafe_allow_html=True)
+        firebase_google_login("signup")
 
     st.markdown('<div class="auth-switch-text">Already have an account?</div>', unsafe_allow_html=True)
     if st.button("Sign In", key="go_signin", use_container_width=True):
